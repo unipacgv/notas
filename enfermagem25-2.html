@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Consulta de Notas por Matrícula</title>
+    <style>
+        :root {
+            --vermelho: #9b1518;   /* tom do UNIPAC */
+            --azul: #00558b;       /* tom do texto Governador Valadares */
+            --cinza-fundo: #f2f4f7;
+            --cinza-borda: #c0c4cc;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: var(--cinza-fundo);
+        }
+
+        header {
+            background-color: #ffffff;
+            border-bottom: 4px solid var(--vermelho);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        header img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border: 1px solid var(--cinza-borda);
+            border-radius: 4px;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: var(--azul);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333333;
+        }
+
+        input[type="text"] {
+            padding: 6px;
+            width: 220px;
+            margin-right: 8px;
+            border: 1px solid var(--cinza-borda);
+            border-radius: 3px;
+        }
+
+        button {
+            padding: 6px 14px;
+            background-color: var(--vermelho);
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #7f1114;
+        }
+
+        #resultado {
+            margin-top: 20px;
+            border-top: 1px solid var(--cinza-borda);
+            padding-top: 10px;
+        }
+
+        .erro {
+            color: var(--vermelho);
+            font-weight: bold;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid var(--cinza-borda);
+            padding: 6px 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--azul);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+  
+<header>
+    <img src="https://i.ibb.co/RMR8H4z/Logo.jpg" alt="UNIPAC Governador Valadares">
+</header>
+
+<h1>Consulta de Notas</h1>
+
+<form id="formConsulta" onsubmit="event.preventDefault(); consultar();">
+    <label for="matricula">Digite sua matrícula (use o formato "262001234"):</label>
+    <input type="text" id="matricula" name="matricula" required>
+    <button type="submit">Consultar</button>
+</form>
+
+<div id="resultado"></div>
+
+<script>
+    // Dados incorporados da aba "Notas" (Matricula, Nome, Periodo, Acertos, Nota)
+    const dadosNotas = [
+  {"Matricula":"252001021","Nome":"JULIANA NERINGNEY RODRIGUES PEREIRA","Periodo":1,"Acertos":19,"Nota":10.857142857142858,"Obs":""},
+  {"Matricula":"252001163","Nome":"NICOLE JÊNIFFER ROCHA PATRÍCIO","Periodo":1,"Acertos":0,"Nota":0,"Obs":""},
+  {"Matricula":"252001001","Nome":"VITÓRIA NASCIMENTO DA SILVA","Periodo":1,"Acertos":18,"Nota":10.285714285714286,"Obs":""},
+  {"Matricula":"252000434","Nome":"YASMIN SOUZA DA SILVA","Periodo":1,"Acertos":21,"Nota":12,"Obs":""},
+  {"Matricula":"251001278","Nome":"ALINE MAYER SILVA PEREIRA","Periodo":2,"Acertos":0,"Nota":0,"Obs":"Ausente"},
+  {"Matricula":"251002045","Nome":"ANA CLARA CORREIA GODINHO","Periodo":2,"Acertos":0,"Nota":0,"Obs":"Ausente"},
+  {"Matricula":"251002158","Nome":"CARLOS FRANCISCO LIMA DOS SANTOS","Periodo":2,"Acertos":6,"Nota":4,"Obs":""},
+  {"Matricula":"251002162","Nome":"MIGUEL ALVES PIRES METZKER","Periodo":2,"Acertos":11,"Nota":7.333333333333333,"Obs":""},
+  {"Matricula":"251002928","Nome":"MIRYAN DEBORA ALVES DE ALMEIDA","Periodo":2,"Acertos":8,"Nota":5.333333333333333,"Obs":""},
+  {"Matricula":"251001892","Nome":"RAISSE ALESSANDRA DE SA VERCOSA","Periodo":2,"Acertos":9,"Nota":6,"Obs":""},
+  {"Matricula":"251002089","Nome":"YASMIN RITA DIAS DA SILVA","Periodo":2,"Acertos":9,"Nota":6,"Obs":""},
+  {"Matricula":"241007206","Nome":"CAMILA DA SILVA EVÊNCIO","Periodo":4,"Acertos":13,"Nota":8.666666666666666,"Obs":""},
+  {"Matricula":"241007040","Nome":"FERNANDA PEREIRA BARBOSA","Periodo":4,"Acertos":14,"Nota":9.333333333333334,"Obs":""},
+  {"Matricula":"241007009","Nome":"GEOVANA FERREIRA DE LIMA","Periodo":4,"Acertos":17,"Nota":11.333333333333334,"Obs":""},
+  {"Matricula":"241007231","Nome":"GILCILENE NASCIMENTO PEREIRA OLIVEIRA","Periodo":4,"Acertos":12,"Nota":8,"Obs":""},
+  {"Matricula":"231002183","Nome":"LAUANE ANDRADE ESTEVAO SOARES","Periodo":4,"Acertos":10,"Nota":6.666666666666667,"Obs":""},
+  {"Matricula":"241006469","Nome":"LAURA NUNES OLIVEIRA","Periodo":4,"Acertos":14,"Nota":9.333333333333334,"Obs":""},
+  {"Matricula":"241006382","Nome":"LOUREN KELLYN PEREIRA DE SOUZA ALVES","Periodo":4,"Acertos":14,"Nota":9.333333333333334,"Obs":""},
+  {"Matricula":"252001331","Nome":"MONIQUE MARIA TEODORO DA SILVA","Periodo":4,"Acertos":13,"Nota":7.428571428571429,"Obs":"30 questões"},
+  {"Matricula":"231003299","Nome":"AMANDA LUCAS DE OLIVEIRA SILVA","Periodo":5,"Acertos":10,"Nota":6.666666666666667,"Obs":""},
+  {"Matricula":"241008177","Nome":"FABRICIA DE FATIMA PEREIRA DOS REIS","Periodo":5,"Acertos":10,"Nota":6.666666666666667,"Obs":""},
+  {"Matricula":"242009655","Nome":"GABRIELA MARTINS PEREIRA","Periodo":5,"Acertos":17,"Nota":11.333333333333334,"Obs":""},
+  {"Matricula":"231003221","Nome":"ISABELA SANTOS DE CARVALHO","Periodo":5,"Acertos":18,"Nota":12,"Obs":""},
+  {"Matricula":"231002562","Nome":"KAROL LEITE REZENDE","Periodo":5,"Acertos":17,"Nota":11.333333333333334,"Obs":""},
+  {"Matricula":"252001312","Nome":"KAROLINE MARTINS DE ALMEIDA","Periodo":5,"Acertos":14,"Nota":9.333333333333334,"Obs":"30 questões"},
+  {"Matricula":"231003341","Nome":"MARIA FERNANDA DOS SANTOS BAESSO","Periodo":5,"Acertos":12,"Nota":8,"Obs":""},
+  {"Matricula":"232000917","Nome":"VICTÓRIA NADER SILVA FERREIRA","Periodo":5,"Acertos":18,"Nota":12,"Obs":""},
+  {"Matricula":"231002551","Nome":"ANA KAROLINE GONÇALVES MOTA","Periodo":6,"Acertos":17,"Nota":13.6,"Obs":""},
+  {"Matricula":"231001248","Nome":"ANA PAULA ACYPRESTES PATROCINIO","Periodo":6,"Acertos":14,"Nota":11.2,"Obs":""},
+  {"Matricula":"171004018","Nome":"CAROLINA DE SOUZA PEREIRA ALMEIDA PEDRA","Periodo":6,"Acertos":17,"Nota":13.6,"Obs":""},
+  {"Matricula":"231000998","Nome":"DEIVIDY CORDEIRO DA SILVA","Periodo":6,"Acertos":14,"Nota":11.2,"Obs":""},
+  {"Matricula":"231000748","Nome":"ESTER VERONICA MARTINS DO PRADO","Periodo":6,"Acertos":12,"Nota":9.6,"Obs":""},
+  {"Matricula":"231002590","Nome":"FELIPE MOREIRA DE CARVALHO","Periodo":6,"Acertos":16,"Nota":12.8,"Obs":""},
+  {"Matricula":"251002804","Nome":"FERNANDA GREGÓRIO PIMENTA","Periodo":6,"Acertos":12,"Nota":9.6,"Obs":""},
+  {"Matricula":"231003330","Nome":"KEWLLY STHEPHANY MIRANDA","Periodo":6,"Acertos":15,"Nota":12,"Obs":""},
+  {"Matricula":"242009533","Nome":"LARA PAULA SILVA FERREIRA","Periodo":6,"Acertos":14,"Nota":11.2,"Obs":""},
+  {"Matricula":"231000190","Nome":"LAYNNE ALANIS GOMES PEREIRA","Periodo":6,"Acertos":15,"Nota":12,"Obs":""},
+  {"Matricula":"231001695","Nome":"LETICIA CONRADO ZANFORLIN","Periodo":6,"Acertos":0,"Nota":0,"Obs":"Ausente"},
+  {"Matricula":"231001009","Nome":"LETICIA LEAL CAMPOS","Periodo":6,"Acertos":17,"Nota":13.6,"Obs":""},
+  {"Matricula":"231002303","Nome":"LUIZA VITORIA NERES FERNANDES","Periodo":6,"Acertos":0,"Nota":0,"Obs":"Ausente"},
+  {"Matricula":"231002510","Nome":"MARCELLE VITORIA FERREIRA MARTINS","Periodo":6,"Acertos":19,"Nota":15.2,"Obs":""},
+  {"Matricula":"231000729","Nome":"MARCIA LORENE DE OLIVEIRA SOUZA","Periodo":6,"Acertos":16,"Nota":12.8,"Obs":""},
+  {"Matricula":"231002124","Nome":"MAYRA JULIA PEREIRA RIBEIRO","Periodo":6,"Acertos":13,"Nota":10.4,"Obs":""},
+  {"Matricula":"251003052","Nome":"NATALIA KESSIA DOS SANTOS MOURA DE PAULA","Periodo":6,"Acertos":15,"Nota":8.571428571428571,"Obs":"35 questões"},
+  {"Matricula":"231001830","Nome":"RAYSSA MONIQUE NISHIZAWA DE OLIVEIRA","Periodo":6,"Acertos":13,"Nota":10.4,"Obs":""},
+  {"Matricula":"231003067","Nome":"SABRINA DE SOUZA VIEIRA","Periodo":6,"Acertos":16,"Nota":12.8,"Obs":""},
+  {"Matricula":"231002429","Nome":"THAÍS DE SOUZA VIEIRA","Periodo":6,"Acertos":14,"Nota":14,"Obs":"20 questões"},
+  {"Matricula":"231001890","Nome":"THAMYRES ARCANJO MARTINS GOMES","Periodo":6,"Acertos":11,"Nota":8.8,"Obs":""},
+  {"Matricula":"241006797","Nome":"VITORIA GOMES PEREIRA","Periodo":6,"Acertos":10,"Nota":8,"Obs":""},
+  {"Matricula":"231001448","Nome":"VITORIA MIRANDA DE ALMEIDA","Periodo":6,"Acertos":11,"Nota":8.8,"Obs":""},
+  {"Matricula":"222000314","Nome":"AGDA DOS SANTOS ALVARENGA","Periodo":7,"Acertos":16,"Nota":12.8,"Obs":""},
+  {"Matricula":"222000071","Nome":"ANDRE GOMES FERNANDES","Periodo":7,"Acertos":14,"Nota":11.2,"Obs":""},
+  {"Matricula":"222000536","Nome":"JOSILAINE MARIA DA SILVA","Periodo":7,"Acertos":11,"Nota":11,"Obs":"20 questões"},
+  {"Matricula":"222001055","Nome":"KAROLINE OLIVEIRA DE JESUS","Periodo":7,"Acertos":17,"Nota":13.6,"Obs":""},
+  {"Matricula":"241007779","Nome":"LIVIA GARCIA FRANÇA","Periodo":7,"Acertos":14,"Nota":14,"Obs":"20 questões"},
+  {"Matricula":"242009571","Nome":"MARA PALOMA SOUZA MAGALHAES","Periodo":7,"Acertos":27,"Nota":15.428571428571429,"Obs":"35 questões"},
+  {"Matricula":"222000092","Nome":"MARCUS EMANUEL DE ASSIS SILVA","Periodo":7,"Acertos":16,"Nota":12.8,"Obs":""},
+  {"Matricula":"251002865","Nome":"MARIA VITORIA DA SILVA BRAGA","Periodo":7,"Acertos":16,"Nota":10.666666666666666,"Obs":"30 questões"},
+  {"Matricula":"151002011","Nome":"MARILIA ERNESTINA ALMEIDA DE ASSIS","Periodo":7,"Acertos":12,"Nota":9.6,"Obs":""},
+  {"Matricula":"222001127","Nome":"RAFAELA SILVA FRANÇA","Periodo":7,"Acertos":17,"Nota":13.6,"Obs":""},
+  {"Matricula":"181004162","Nome":"ALECIO FRANCISCO DA SILVA JUNIOR","Periodo":8,"Acertos":9,"Nota":9,"Obs":"20 questões"},
+  {"Matricula":"221001041","Nome":"ALICE CRISTINA LIMA COSTA","Periodo":8,"Acertos":16,"Nota":12.8,"Obs":""},
+  {"Matricula":"221000601","Nome":"ANDRESSA PORTELA CORREA SILVA","Periodo":8,"Acertos":16,"Nota":12.8,"Obs":""},
+  {"Matricula":"221000536","Nome":"CAMILLY ANTONIELLY SANGI DA SILVA","Periodo":8,"Acertos":11,"Nota":8.8,"Obs":""},
+  {"Matricula":"221002036","Nome":"CAROLAINE GOMES DOS SANTOS","Periodo":8,"Acertos":11,"Nota":8.8,"Obs":""},
+  {"Matricula":"221002160","Nome":"EDSON GLYNDLEY TRINDADE PEREIRA","Periodo":8,"Acertos":16,"Nota":12.8,"Obs":""},
+  {"Matricula":"221002007","Nome":"ELCILENE RODRIGUES DA CRUZ","Periodo":8,"Acertos":11,"Nota":8.8,"Obs":""},
+  {"Matricula":"221001884","Nome":"FLÁVIA DE ALMEIDA FELEX","Periodo":8,"Acertos":12,"Nota":9.6,"Obs":""},
+  {"Matricula":"231001476","Nome":"ISABELLA PATRICIA DE CARVALHO BRITO","Periodo":8,"Acertos":7,"Nota":14,"Obs":"10 questões"},
+  {"Matricula":"221001992","Nome":"JESSICA SILVA FRAGA","Periodo":8,"Acertos":8,"Nota":6.4,"Obs":""},
+  {"Matricula":"221001977","Nome":"LARISSA SOUZA MORAES","Periodo":8,"Acertos":9,"Nota":7.2,"Obs":""},
+  {"Matricula":"221001012","Nome":"LETICIA BRAGA XAVIER","Periodo":8,"Acertos":14,"Nota":11.2,"Obs":""},
+  {"Matricula":"221001554","Nome":"RAISSA RODRIGUES SODRE","Periodo":8,"Acertos":13,"Nota":10.4,"Obs":""},
+  {"Matricula":"221001593","Nome":"SUMAIA DE OLIVEIRA FELIX","Periodo":8,"Acertos":10,"Nota":8,"Obs":""},
+  {"Matricula":"212000100","Nome":"AGDA VITHORIA BRANDAO DE FREITAS","Periodo":9,"Acertos":18,"Nota":14.4,"Obs":""},
+  {"Matricula":"162001562","Nome":"ÂNGELA MARIA GRIGÓRIO","Periodo":9,"Acertos":9,"Nota":9,"Obs":"20 questões"},
+  {"Matricula":"212001584","Nome":"FABIANA ALVES VERNEQUE","Periodo":9,"Acertos":16,"Nota":12.8,"Obs":""},
+  {"Matricula":"231002894","Nome":"GABRIELA PEREIRA DOS SANTOS","Periodo":9,"Acertos":8,"Nota":10.666666666666666,"Obs":"15 questões"},
+  {"Matricula":"212001521","Nome":"KAREN CRISTINE DA SILVA GONÇALVES","Periodo":9,"Acertos":19,"Nota":15.2,"Obs":""},
+  {"Matricula":"212000112","Nome":"MANUELA LEÃO","Periodo":9,"Acertos":12,"Nota":9.6,"Obs":""},
+  {"Matricula":"201002809","Nome":"MARIA EDUARDA COELHO ALBERNAZ SOARES","Periodo":9,"Acertos":16,"Nota":10.666666666666666,"Obs":"30 questões"},
+  {"Matricula":"231002466","Nome":"NICOLLE AGNES DE OLIVEIRA MILLER","Periodo":9,"Acertos":10,"Nota":10,"Obs":"20 questões"},
+  {"Matricula":"212001217","Nome":"PABLINE GONÇALVES AMARAL","Periodo":9,"Acertos":15,"Nota":12,"Obs":""},
+  {"Matricula":"211001852","Nome":"VANUZA FERREIRA SOUZA FERNANDES","Periodo":9,"Acertos":11,"Nota":11,"Obs":"20 questões"}
+  {
+    "Matricula": "212001521",
+    "Nome": "KAREN CRISTINE DA SILVA GONÇALVES",
+    "Periodo": 9,
+    "Acertos": 19,
+    "Nota": 15.2,
+    "Obs": ""
+  },
+  {
+    "Matricula": "212000112",
+    "Nome": "MANUELA LEÃO",
+    "Periodo": 9,
+    "Acertos": 12,
+    "Nota": 9.6,
+    "Obs": ""
+  },
+  {
+    "Matricula": "201002809",
+    "Nome": "MARIA EDUARDA COELHO ALBERNAZ SOARES",
+    "Periodo": 9,
+    "Acertos": 16,
+    "Nota": 10.666666666666666,
+    "Obs": "30 questões"
+  },
+  {
+    "Matricula": "231002466",
+    "Nome": "NICOLLE AGNES DE OLIVEIRA MILLER",
+    "Periodo": 9,
+    "Acertos": 10,
+    "Nota": 10,
+    "Obs": "20 questões"
+  },
+  {
+    "Matricula": "212001217",
+    "Nome": "PABLINE GONÇALVES AMARAL",
+    "Periodo": 9,
+    "Acertos": 15,
+    "Nota": 12,
+    "Obs": ""
+  },
+  {
+    "Matricula": "211001852",
+    "Nome": "VANUZA FERREIRA SOUZA FERNANDES",
+    "Periodo": 9,
+    "Acertos": 11,
+    "Nota": 11,
+    "Obs": "20 questões"
+  }
+];
+
+    function consultar() {
+        const mat = document.getElementById('matricula').value.trim();
+        const resultadoDiv = document.getElementById('resultado');
+        resultadoDiv.innerHTML = "";
+
+        if (!mat) {
+            resultadoDiv.innerHTML = '<p class="erro">Informe um número de matrícula.</p>';
+            return;
+        }
+
+        const registro = dadosNotas.find(item => item.matricula === mat);
+
+        if (!registro) {
+            resultadoDiv.innerHTML = '<p class="erro">Matrícula não encontrada na tabela de notas.</p>';
+            return;
+        }
+
+        resultadoDiv.innerHTML = `
+            <h2>Resultado</h2>
+            <table>
+                <tr><th>Matrícula</th><td>${registro.matricula}</td></tr>
+                <tr><th>Nome</th><td>${registro.nome}</td></tr>
+                <tr><th>Período</th><td>${registro.periodo}</td></tr>
+                <tr><th>Acertos</th><td>${registro.acertos}</td></tr>
+                <tr><th>Nota</th><td>${registro.nota}</td></tr>
+            </table>
+        `;
+    }
+</script>
+
+</body>
+</html>

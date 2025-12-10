@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Enfermagem - Consulta de Notas</title>
+    <style>
+        :root {
+            --vermelho: #9b1518;
+            --azul: #00558b;
+            --cinza-fundo: #f2f4f7;
+            --cinza-borda: #c0c4cc;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: var(--cinza-fundo);
+        }
+
+        header {
+            background-color: #ffffff;
+            border-bottom: 4px solid var(--vermelho);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        header img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border: 1px solid var(--cinza-borda);
+            border-radius: 4px;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: var(--azul);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333333;
+        }
+
+        input[type="text"] {
+            padding: 6px;
+            width: 220px;
+            margin-right: 8px;
+            border: 1px solid var(--cinza-borda);
+            border-radius: 3px;
+        }
+
+        button {
+            padding: 6px 14px;
+            background-color: var(--vermelho);
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #7f1114;
+        }
+
+        #resultado {
+            margin-top: 20px;
+            border-top: 1px solid var(--cinza-borda);
+            padding-top: 10px;
+        }
+
+        .erro {
+            color: var(--vermelho);
+            font-weight: bold;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid var(--cinza-borda);
+            padding: 6px 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--azul);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <!-- Reutilizando o mesmo logo -->
+    <img src="Logo.jpg" alt="UNIPAC Governador Valadares">
+</header>
+
+<main>
+    <h1>Enfermagem - Consulta de Notas</h1>
+
+    <form id="formConsulta" onsubmit="event.preventDefault(); consultar();">
+        <label for="matricula">Digite sua matrícula:</label>
+        <input type="text" id="matricula" name="matricula" required>
+        <button type="submit">Consultar</button>
+    </form>
+
+    <div id="resultado"></div>
+</main>
+
+<script>
+    // Dados da planilha Notas-Enfermagem (Matricula, Nome, Periodo, Acertos, Nota, Obs)
+    const dadosNotas = [
+        { matricula: "252001021", nome: "JULIANA NERINGNEY RODRIGUES PEREIRA", periodo: 1, acertos: 19, nota: 10.9, obs: "" },
+        { matricula: "252001163", nome: "NICOLE JENIFFER ROCHA PATRICIO", periodo: 1, acertos: 0, nota: 0.0, obs: "" },
+        { matricula: "252001001", nome: "VITORIA NASCIMENTO DA SILVA", periodo: 1, acertos: 18, nota: 10.3, obs: "" },
+        { matricula: "252000434", nome: "YASMIN SOUZA DA SILVA", periodo: 1, acertos: 21, nota: 12.0, obs: "" },
+
+        { matricula: "251001278", nome: "ALINE MAYER SILVA PEREIRA", periodo: 2, acertos: 0, nota: 0.0, obs: "Ausente" },
+        { matricula: "251002045", nome: "ANA CLARA CORREIA GODINHO", periodo: 2, acertos: 0, nota: 0.0, obs: "Ausente" },
+        { matricula: "251002158", nome: "CARLOS FRANCISCO LIMA DOS SANTOS", periodo: 2, acertos: 6, nota: 4.0, obs: "" },
+        { matricula: "251002162", nome: "MIGUEL ALVES PIRES METZKER", periodo: 2, acertos: 11, nota: 7.3, obs: "" },
+        { matricula: "251002928", nome: "MIRYAN DEBORA ALVES DE ALMEIDA", periodo: 2, acertos: 8, nota: 5.3, obs: "" },
+        { matricula: "251001892", nome: "RAISSE ALESSANDRA DE SA VERCOSA", periodo: 2, acertos: 9, nota: 6.0, obs: "" },
+        { matricula: "251002089", nome: "YASMIN RITA DIAS DA SILVA", periodo: 2, acertos: 9, nota: 6.0, obs: "" },
+
+        { matricula: "241007206", nome: "CAMILA DA SILVA EVINCIO", periodo: 4, acertos: 13, nota: 8.7, obs: "" },
+        { matricula: "241007040", nome: "FERNANDA PEREIRA BARBOSA", periodo: 4, acertos: 14, nota: 9.3, obs: "" },
+        { matricula: "241007009", nome: "GEOVANA FERREIRA DE LIMA", periodo: 4, acertos: 17, nota: 11.3, obs: "" },
+        { matricula: "241007231", nome: "GILCILENE NASCIMENTO PEREIRA OLIVEIRA", periodo: 4, acertos: 12, nota: 8.0, obs: "" },
+        { matricula: "231002183", nome: "LAUANE ANDRADE ESTEVÃO SOARES", periodo: 4, acertos: 10, nota: 6.7, obs: "" },
+        { matricula: "241006469", nome: "LAURA NUNES OLIVEIRA", periodo: 4, acertos: 14, nota: 9.3, obs: "" },
+        { matricula: "241006382", nome: "LOUREN KELLYN PEREIRA DE SOUZA ALVES", periodo: 4, acertos: 14, nota: 9.3, obs: "" },
+        { matricula: "252001331", nome: "MONIQUE MARIA TEODORO DA SILVA", periodo: 4, acertos: 13, nota: 7.4, obs: "30 questões" },
+
+        { matricula: "231003299", nome: "AMANDA LUCAS DE OLIVEIRA SILVA", periodo: 5, acertos: 10, nota: 6.7, obs: "" },
+        { matricula: "241008177", nome: "FABRICIA DE FATIMA PEREIRA DOS REIS", periodo: 5, acertos: 10, nota: 6.7, obs: "" },
+        { matricula: "242009655", nome: "GABRIELA MARTINS PEREIRA", periodo: 5, acertos: 17, nota: 11.3, obs: "" },
+        { matricula: "231003221", nome: "ISABELA SANTOS DE CARVALHO", periodo: 5, acertos: 18, nota: 12.0, obs: "" },
+        { matricula: "231002562", nome: "KAROL LEITE REZENDE", periodo: 5, acertos: 17, nota: 11.3, obs: "" },
+        { matricula: "252001312", nome: "KAROLINE MARTINS DE ALMEIDA", periodo: 5, acertos: 14, nota: 9.3, obs: "30 questões" },
+        { matricula: "231003341", nome: "MARIA FERNANDA DOS SANTOS BAESSO", periodo: 5, acertos: 12, nota: 8.0, obs: "" },
+        { matricula: "232000917", nome: "VITORIA NADER SILVA FERREIRA", periodo: 5, acertos: 18, nota: 12.0, obs: "" },
+
+        { matricula: "231002551", nome: "ANA KAROLINE GONCALVES MOTA", periodo: 6, acertos: 17, nota: 13.6, obs: "" },
+        { matricula: "231001248", nome: "ANA PAULA ACYPRESTES PATROCINIO", periodo: 6, acertos: 14, nota: 11.2, obs: "" },
+        { matricula: "171004018", nome: "CAROLINA DE SOUZA PEREIRA ALMEIDA PEDRA", periodo: 6, acertos: 17, nota: 13.6, obs: "" },
+        { matricula: "231000998", nome: "DEIVIDY CORDEIRO DA SILVA", periodo: 6, acertos: 14, nota: 11.2, obs: "" },
+        { matricula: "231000748", nome: "ESTER VERONICA MARTINS DO PRADO", periodo: 6, acertos: 12, nota: 9.6, obs: "" },
+        { matricula: "231002590", nome: "FELIPE MOREIRA DE CARVALHO", periodo: 6, acertos: 16, nota: 12.8, obs: "" },
+        { matricula: "251002804", nome: "FERNANDA GREGORIO PIMENTA", periodo: 6, acertos: 12, nota: 9.6, obs: "" },
+        { matricula: "231003330", nome: "KEWLLY STHEPHANY MIRANDA", periodo: 6, acertos: 15, nota: 12.0, obs: "" },
+        { matricula: "242009533", nome: "LARA PAULA SILVA FERREIRA", periodo: 6, acertos: 14, nota: 11.2, obs: "" },
+        { matricula: "231000190", nome: "LAYNNE ALANIS GOMES PEREIRA", periodo: 6, acertos: 15, nota: 12.0, obs: "" },
+        { matricula: "231001695", nome: "LETICIA CONRADO ZANFORLIN", periodo: 6, acertos: 0, nota: 0.0, obs: "Ausente" },
+        { matricula: "231001009", nome: "LETICIA LEAL CAMPOS", periodo: 6, acertos: 17, nota: 13.6, obs: "" },
+        { matricula: "231002303", nome: "LUIZA VITORIA NERES FERNANDES", periodo: 6, acertos: 0, nota: 0.0, obs: "Ausente" },
+        { matricula: "231002510", nome: "MARCELLE VITORIA FERREIRA MARTINS", periodo: 6, acertos: 19, nota: 15.2, obs: "" },
+        { matricula: "231000729", nome: "MARCIA LORENE DE OLIVEIRA SOUZA", periodo: 6, acertos: 16, nota: 12.8, obs: "" },
+        { matricula: "231002124", nome: "MAYRA JULIA PEREIRA RIBEIRO", periodo: 6, acertos: 13, nota: 10.4, obs: "" },
+        { matricula: "251003052", nome: "NATALIA KESSIA DOS SANTOS MOURA DE PAULA", periodo: 6, acertos: 15, nota: 8.6, obs: "35 questões" },
+        { matricula: "231001830", nome: "RAYSSA MONIQUE NISHIZAWA DE OLIVEIRA", periodo: 6, acertos: 13, nota: 10.4, obs: "" },
+        { matricula: "231003067", nome: "SABRINA DE SOUZA VIEIRA", periodo: 6, acertos: 16, nota: 12.8, obs: "" },
+        { matricula: "231002429", nome: "THAIS DE SOUZA VIEIRA", periodo: 6, acertos: 14, nota: 14.0, obs: "20 questões" },
+        { matricula: "231001890", nome: "THAMYRES ARCANJO MARTINS GOMES", periodo: 6, acertos: 11, nota: 8.8, obs: "" },
+        { matricula: "241006797", nome: "VITORIA GOMES PEREIRA", periodo: 6, acertos: 10, nota: 8.0, obs: "" },
+        { matricula: "231001448", nome: "VITORIA MIRANDA DE ALMEIDA", periodo: 6, acertos: 11, nota: 8.8, obs: "" },
+
+        { matricula: "222000314", nome: "AGDA DOS SANTOS ALVARENGA", periodo: 7, acertos: 16, nota: 12.8, obs: "" },
+        { matricula: "222000071", nome: "ANDRE GOMES FERNANDES", periodo: 7, acertos: 14, nota: 11.2, obs: "" },
+        { matricula: "222000536", nome: "JOSILAINE MARIA DA SILVA", periodo: 7, acertos: 11, nota: 11.0, obs: "20 questões" },
+        { matricula: "222001055", nome: "KAROLINE OLIVEIRA DE JESUS", periodo: 7, acertos: 17, nota: 13.6, obs: "" },
+        { matricula: "241007779", nome: "LIVIA GARCIA FRANÇA", periodo: 7, acertos: 14, nota: 14.0, obs: "20 questões" },
+        { matricula: "242009571", nome: "MARA PALOMA SOUZA MAGALHAES", periodo: 7, acertos: 27, nota: 15.4, obs: "35 questões" },
+        { matricula: "222000092", nome: "MARCUS EMANUEL DE ASSIS SILVA", periodo: 7, acertos: 16, nota: 12.8, obs: "" },
+        { matricula: "251002865", nome: "MARIA VITORIA DA SILVA BRAGA", periodo: 7, acertos: 16, nota: 10.7, obs: "30 questões" },
+        { matricula: "151002011", nome: "MARILIA ERNESTINA ALMEIDA DE ASSIS", periodo: 7, acertos: 12, nota: 9.6, obs: "" },
+        { matricula: "222001127", nome: "RAFAELA SILVA FRANÇA", periodo: 7, acertos: 17, nota: 13.6, obs: "" },
+
+        { matricula: "181004162", nome: "ALECIO FRANCISCO DA SILVA JUNIOR", periodo: 8, acertos: 9, nota: 9.0, obs: "20 questões" },
+        { matricula: "221001041", nome: "ALICE CRISTINA LIMA COSTA", periodo: 8, acertos: 16, nota: 12.8, obs: "" },
+        { matricula: "221000601", nome: "ANDRESSA PORTELA CORREA SILVA", periodo: 8, acertos: 16, nota: 12.8, obs: "" },
+        { matricula: "221000536", nome: "CAMILLY ANTONIELLY SANGI DA SILVA", periodo: 8, acertos: 11, nota: 8.8, obs: "" },
+        { matricula: "221002036", nome: "CAROLAINE GOMES DOS SANTOS", periodo: 8, acertos: 11, nota: 8.8, obs: "" },
+        { matricula: "221002160", nome: "EDSON GLYNDLEY TRINDADE PEREIRA", periodo: 8, acertos: 16, nota: 12.8, obs: "" },
+        { matricula: "221002007", nome: "ELCILENE RODRIGUES DA CRUZ", periodo: 8, acertos: 11, nota: 8.8, obs: "" },
+        { matricula: "221001884", nome: "FLAVIA DE ALMEIDA FELEX", periodo: 8, acertos: 12, nota: 9.6, obs: "" },
+        { matricula: "231001476", nome: "ISABELLA PATRICIA DE CARVALHO BRITO", periodo: 8, acertos: 7, nota: 14.0, obs: "10 questões" },
+        { matricula: "221001992", nome: "JESSICA SILVA FRAGA", periodo: 8, acertos: 8, nota: 6.4, obs: "" },
+        { matricula: "221001977", nome: "LARISSA SOUZA MORAES", periodo: 8, acertos: 9, nota: 7.2, obs: "" },
+        { matricula: "221001012", nome: "LETICIA BRAGA XAVIER", periodo: 8, acertos: 14, nota: 11.2, obs: "" },
+        { matricula: "221001554", nome: "RAISSA RODRIGUES SODRE", periodo: 8, acertos: 13, nota: 10.4, obs: "" },
+        { matricula: "221001593", nome: "SUMAIA DE OLIVEIRA FELIX", periodo: 8, acertos: 10, nota: 8.0, obs: "" },
+
+        { matricula: "212000100", nome: "AGDA VITHORIA BRANDAO DE FREITAS", periodo: 9, acertos: 18, nota: 14.4, obs: "" },
+        { matricula: "162001562", nome: "ANGELA MARIA GREGORIO", periodo: 9, acertos: 9, nota: 9.0, obs: "20 questões" },
+        { matricula: "212001584", nome: "FABIANA ALVES VERNEQUE", periodo: 9, acertos: 16, nota: 12.8, obs: "" },
+        { matricula: "231002894", nome: "GABRIELA PEREIRA DOS SANTOS", periodo: 9, acertos: 8, nota: 10.7, obs: "15 questões" },
+        { matricula: "212001521", nome: "KAREN CRISTINE DA SILVA GONCALVES", periodo: 9, acertos: 19, nota: 15.2, obs: "" },
+        { matricula: "212000112", nome: "MANUELA LEO", periodo: 9, acertos: 12, nota: 9.6, obs: "" },
+        { matricula: "201002809", nome: "MARIA EDUARDA COELHO ALBERNAZ SOARES", periodo: 9, acertos: 16, nota: 10.7, obs: "30 questões" },
+        { matricula: "231002466", nome: "NICOLLE AGNES DE OLIVEIRA MILLER", periodo: 9, acertos: 10, nota: 10.0, obs: "20 questões" },
+        { matricula: "212001217", nome: "PABLINE GONCALVES AMARAL", periodo: 9, acertos: 15, nota: 12.0, obs: "" },
+        { matricula: "211001852", nome: "VANUZA FERREIRA SOUZA FERNANDES", periodo: 9, acertos: 11, nota: 11.0, obs: "20 questões" }
+
+    ];
+
+    function consultar() {
+        const mat = document.getElementById('matricula').value.trim();
+        const resultadoDiv = document.getElementById('resultado');
+        resultadoDiv.innerHTML = "";
+
+        if (!mat) {
+            resultadoDiv.innerHTML = '<p class="erro">Informe um número de matrícula.</p>';
+            return;
+        }
+
+        const registro = dadosNotas.find(item => item.matricula === mat);
+
+        if (!registro) {
+            resultadoDiv.innerHTML = '<p class="erro">Matrícula não encontrada na tabela de notas.</p>';
+            return;
+        }
+
+        resultadoDiv.innerHTML = `
+            <h2>Resultado</h2>
+            <table>
+                <tr><th>Matrícula</th><td>${registro.matricula}</td></tr>
+                <tr><th>Nome</th><td>${registro.nome}</td></tr>
+                <tr><th>Período</th><td>${registro.periodo}</td></tr>
+                <tr><th>Acertos</th><td>${registro.acertos}</td></tr>
+                <tr><th>Nota</th><td>${registro.nota}</td></tr>
+                <tr><th>Obs</th><td>${registro.obs || ""}</td></tr>
+            </table>
+        `;
+    }
+</script>
+
+</body>
+</html>

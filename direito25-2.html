@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Consulta de Notas por Matrícula</title>
+    <style>
+        :root {
+            --vermelho: #9b1518;   /* tom do UNIPAC */
+            --azul: #00558b;       /* tom do texto Governador Valadares */
+            --cinza-fundo: #f2f4f7;
+            --cinza-borda: #c0c4cc;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: var(--cinza-fundo);
+        }
+
+        header {
+            background-color: #ffffff;
+            border-bottom: 4px solid var(--vermelho);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        header img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        main {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border: 1px solid var(--cinza-borda);
+            border-radius: 4px;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: var(--azul);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333333;
+        }
+
+        input[type="text"] {
+            padding: 6px;
+            width: 220px;
+            margin-right: 8px;
+            border: 1px solid var(--cinza-borda);
+            border-radius: 3px;
+        }
+
+        button {
+            padding: 6px 14px;
+            background-color: var(--vermelho);
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #7f1114;
+        }
+
+        #resultado {
+            margin-top: 20px;
+            border-top: 1px solid var(--cinza-borda);
+            padding-top: 10px;
+        }
+
+        .erro {
+            color: var(--vermelho);
+            font-weight: bold;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid var(--cinza-borda);
+            padding: 6px 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--azul);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+  
+<header>
+    <img src="https://i.ibb.co/RMR8H4z/Logo.jpg" alt="UNIPAC Governador Valadares">
+</header>
+
+<h1>Consulta de Notas</h1>
+
+<form id="formConsulta" onsubmit="event.preventDefault(); consultar();">
+    <label for="matricula">Digite sua matrícula (use o formato "262001234"):</label>
+    <input type="text" id="matricula" name="matricula" required>
+    <button type="submit">Consultar</button>
+</form>
+
+<div id="resultado"></div>
+
+<script>
+    // Dados incorporados da aba "Notas" (Matricula, Nome, Periodo, Acertos, Nota)
+    const dadosNotas = [
+        { matricula: "262001234", nome: "EXEMPLO", periodo: 0, acertos: 25, nota: 20 },
+        { matricula: "231001600", nome: "ADILSON LUIZ FERREIRA JUNIOR", periodo: 6, acertos: 12, nota: 9.6 },
+        { matricula: "252001125", nome: "AGHATA VICTORIA JUSTINO SIQUEIRA", periodo: 1, acertos: 16, nota: 12.8 },
+        { matricula: "241008019", nome: "ALDA LUCIA DE FATIMA DAMASIO SILVA", periodo: 4, acertos: 20, nota: 16 },
+        { matricula: "241006321", nome: "ALERRANDRO CALIXTO PRATES", periodo: 4, acertos: 12, nota: 9.6 },
+        { matricula: "241007623", nome: "ALINE ARAUJO LEMOS", periodo: 4, acertos: 16, nota: 12.8 },
+        { matricula: "241007504", nome: "ANA CAROLINA FERREIRA BARROS", periodo: 4, acertos: 22, nota: 17.6 },
+        { matricula: "252001230", nome: "ANAEL GOMES DIAS", periodo: 1, acertos: 16, nota: 12.8 },
+        { matricula: "241006191", nome: "ANALICE DO NASCIMENTO GOMES", periodo: 4, acertos: 14, nota: 11.2 },
+        { matricula: "231001742", nome: "ANDERSON SILVA RAMOS", periodo: 6, acertos: 12, nota: 9.6 },
+        { matricula: "251002678", nome: "ANGELA BRIGIDA DA SILVA", periodo: 2, acertos: 10, nota: 8 },
+        { matricula: "231001175", nome: "ANNA CAROLINA OLIVEIRA SANTOS", periodo: 6, acertos: 11, nota: 8.8 },
+        { matricula: "241006930", nome: "ARYANE DE SOUZA SANJUAN", periodo: 4, acertos: 21, nota: 16.8 },
+        { matricula: "231001022", nome: "BRUNA SANGI GOUVEIA", periodo: 6, acertos: 12, nota: 9.6 },
+        { matricula: "231001278", nome: "CAMILE FERREIRA BARBOSA", periodo: 6, acertos: 11, nota: 8.8 },
+        { matricula: "231001966", nome: "CARLA KLISMAN PATRICIO DA SILVA", periodo: 6, acertos: 14, nota: 11.2 },
+        { matricula: "232001236", nome: "CRISTIANE LOMBA DE PAULA", periodo: 5, acertos: 21, nota: 16.8 },
+        { matricula: "232000984", nome: "DANIEL HENRIQUE MENDES DOS SANTOS", periodo: 6, acertos: 18, nota: 14.4 },
+        { matricula: "241008065", nome: "DAVI ADRIAN SILVA SOARES", periodo: 4, acertos: 17, nota: 13.6 },
+        { matricula: "252000988", nome: "DAVID RAMOS DOS SANTOS", periodo: 1, acertos: 15, nota: 12 },
+        { matricula: "252000467", nome: "DEBORA CALAZANS DE JESUS PEREIRA", periodo: 1, acertos: 8, nota: 6.4 },
+        { matricula: "232000338", nome: "EMILLY MEDEIROS PEREIRA", periodo: 5, acertos: 14, nota: 11.2 },
+        { matricula: "252001054", nome: "EUNICE MARIANA DE SOUZA", periodo: 1, acertos: 13, nota: 10.4 },
+        { matricula: "231000841", nome: "FELIPE PURCINO", periodo: 6, acertos: 13, nota: 10.4 },
+        { matricula: "252000845", nome: "GABRIEL MAXIMO SIQUEIRA SOUZA", periodo: 1, acertos: 10, nota: 8 },
+        { matricula: "252000807", nome: "GABRIEL ORECHIO BORGES", periodo: 1, acertos: 20, nota: 16 },
+        { matricula: "241007529", nome: "GABRIEL RODRIGUES RIBEIRO", periodo: 4, acertos: 19, nota: 15.2 },
+        { matricula: "242008912", nome: "GABRIELLE DE OLIVEIRA LOPES SEVERINO", periodo: 3, acertos: 15, nota: 12 },
+        { matricula: "251002892", nome: "GIL PABLO OLIVEIRA ALMEIDA", periodo: 2, acertos: 12, nota: 9.6 },
+        { matricula: "241007525", nome: "GIOVANNI ROBERT ROCHA DA SILVA", periodo: 4, acertos: 15, nota: 12 },
+        { matricula: "232001018", nome: "GUILHERME MORAIS MACHADO", periodo: 5, acertos: 19, nota: 15.2 },
+        { matricula: "251003130", nome: "GUSTAVO HENRIQUE DE PAULA LOPES", periodo: 2, acertos: 20, nota: 16 },
+        { matricula: "242009632", nome: "GUSTAVO RAFAEL ALCANTARA FORTUNATO", periodo: 2, acertos: 11, nota: 8.8 },
+        { matricula: "251003339", nome: "IEZA PAIXAO ALMEIDA DOS SANTOS", periodo: 2, acertos: 18, nota: 14.4 },
+        { matricula: "252000783", nome: "JEANE CARLA ALVES ROCHA PIRES", periodo: 1, acertos: 17, nota: 13.6 },
+        { matricula: "251002020", nome: "JESSICA VITORIA FERREIRA DOS SANTOS", periodo: 2, acertos: 10, nota: 8 },
+        { matricula: "242009629", nome: "JOANA KELLY LANA COSTA", periodo: 3, acertos: 10, nota: 8 },
+        { matricula: "241007117", nome: "JOAO ARTHUR ROCHA OLIVEIRA", periodo: 4, acertos: 16, nota: 12.8 },
+        { matricula: "231001470", nome: "JOAO PEDRO GONCALVES", periodo: 6, acertos: 17, nota: 13.6 },
+        { matricula: "232001174", nome: "JOAO VYTOR MACHADO DA SILVA", periodo: 5, acertos: 13, nota: 10.4 },
+        { matricula: "242009061", nome: "JOSE LEANDRO FERREIRA JUNIOR", periodo: 3, acertos: 15, nota: 12 },
+        { matricula: "251002348", nome: "KEVIN NOGUEIRA HERINGER TEIXEIRA", periodo: 2, acertos: 11, nota: 8.8 },
+        { matricula: "251001652", nome: "KLEBER LUCAS BISPO DIAS", periodo: 2, acertos: 9, nota: 7.2 },
+        { matricula: "251002388", nome: "LEONARDA RIBEIRO DA SILVA", periodo: 2, acertos: 12, nota: 9.6 },
+        { matricula: "242008509", nome: "LIDYANE MOREIRA BALBINO DA SILVA", periodo: 3, acertos: 17, nota: 13.6 },
+        { matricula: "232001221", nome: "LIEGE COUTINHO GOULART DORNELLAS", periodo: 6, acertos: 5, nota: 10 },
+        { matricula: "241006324", nome: "LILLIANE GONCALVES DA SILVA", periodo: 4, acertos: 11, nota: 8.8 },
+        { matricula: "242009527", nome: "LORENA ALVARENGA LAGE MANSUR", periodo: 3, acertos: 17, nota: 13.6 },
+        { matricula: "251002194", nome: "LUDMILA RODRIGUES DE CASTRO", periodo: 2, acertos: 14, nota: 11.2 },
+        { matricula: "232000964", nome: "LUDMILA SILVA LEAL", periodo: 5, acertos: 13, nota: 10.4 },
+        { matricula: "241007943", nome: "LUIZ ANSELMO PEREIRA LOURENCO JUNIOR", periodo: 4, acertos: 20, nota: 16 },
+        { matricula: "242009543", nome: "MAIARA SOARES SOYER", periodo: 5, acertos: 18, nota: 14.4 },
+        { matricula: "231001899", nome: "MAQUILENE ALCANTARA ALVES", periodo: 6, acertos: 13, nota: 10.4 },
+        { matricula: "242009309", nome: "MARCOS AURELIO MARTINS BARBOSA", periodo: 3, acertos: 17, nota: 13.6 },
+        { matricula: "241007478", nome: "MARCOS TADEU CLEMENTE MACHADO", periodo: 4, acertos: 18, nota: 14.4 },
+        { matricula: "241000200", nome: "MARIA CLARA DE FREITAS TELES", periodo: 4, acertos: 13, nota: 10.4 },
+        { matricula: "231001293", nome: "MARIA EDUARDA DA SILVA CORREA", periodo: 6, acertos: 15, nota: 12 },
+        { matricula: "241007288", nome: "MARIANA ALMEIDA DE JESUS", periodo: 5, acertos: 17, nota: 13.6 },
+        { matricula: "251002810", nome: "MATHEUS FRANCO MAIA", periodo: 2, acertos: 15, nota: 12 },
+        { matricula: "251002632", nome: "MATHEUS RODRIGUES MARTINS", periodo: 2, acertos: 12, nota: 9.6 },
+        { matricula: "241007348", nome: "MAYCON BYBYANO RODRIGUES DA SILVA", periodo: 6, acertos: 11, nota: 8.8 },
+        { matricula: "252000808", nome: "MIGUEL DE OLIVEIRA LOPES ANDRADE", periodo: 1, acertos: 18, nota: 14.4 },
+        { matricula: "252000862", nome: "NEEMIAS DE SOUZA ALVES RIVERA", periodo: 1, acertos: 10, nota: 8 },
+        { matricula: "251002606", nome: "NICKOLAS MEDEIROS PEREIRA", periodo: 2, acertos: 12, nota: 9.6 },
+        { matricula: "231002343", nome: "OZEIAS JUNIO SOUZA DE OLIVEIRA", periodo: 6, acertos: 11, nota: 11 },
+        { matricula: "232000854", nome: "PATRICIA EIDES PEREIRA", periodo: 5, acertos: 21, nota: 16.8 },
+        { matricula: "252000658", nome: "PAULO CESAR DE OLIVEIRA SANTOS", periodo: 1, acertos: 17, nota: 13.6 },
+        { matricula: "251000980", nome: "PAULO HENRIQUE ROSA DA SILVA", periodo: 2, acertos: 11, nota: 8.8 },
+        { matricula: "252000743", nome: "RAIKA FARIA SALES", periodo: 1, acertos: 15, nota: 12 },
+        { matricula: "232001240", nome: "RAMYRES SOARES DE SOUSA", periodo: 5, acertos: 12, nota: 9.6 },
+        { matricula: "232001031", nome: "RANJOEL GOMES DA SILVA MENEZES", periodo: 5, acertos: 13, nota: 10.4 },
+        { matricula: "251003242", nome: "REGIANE PEREIRA DE JESUS", periodo: 6, acertos: 13, nota: 10.4 },
+        { matricula: "251001653", nome: "SAMUEL QUEIROZ VALADARES DE ALMEIDA", periodo: 2, acertos: 10, nota: 8 },
+        { matricula: "242008998", nome: "SARAH LORRANE FERREIRA DE MATOS SILVA", periodo: 3, acertos: 16, nota: 12.8 },
+        { matricula: "242009525", nome: "SARAH VALENTINE EUGENIA DA SILVA", periodo: 3, acertos: 18, nota: 14.4 },
+        { matricula: "231000817", nome: "VANESSA HORTENCIA OLIVEIRA RIBEIRO", periodo: 6, acertos: 15, nota: 12 },
+        { matricula: "242009029", nome: "VICTOR KENEDY DE SOUZA CABRAL", periodo: 3, acertos: 12, nota: 9.6 },
+        { matricula: "241005477", nome: "VICTOR TEIXEIRA DO PRADO", periodo: 4, acertos: 17, nota: 13.6 },
+        { matricula: "242009634", nome: "WALTHER ANASTACIO JUNIOR", periodo: 4, acertos: 3, nota: 12 },
+        { matricula: "252000632", nome: "WEBER FERREIRA ESPERANCA", periodo: 1, acertos: 12, nota: 9.6 },
+        { matricula: "231001309", nome: "WELLINGTON DA SILVA PEREIRA ALMEIDA DE PAULA", periodo: 6, acertos: 20, nota: 16 }
+    ];
+
+    function consultar() {
+        const mat = document.getElementById('matricula').value.trim();
+        const resultadoDiv = document.getElementById('resultado');
+        resultadoDiv.innerHTML = "";
+
+        if (!mat) {
+            resultadoDiv.innerHTML = '<p class="erro">Informe um número de matrícula.</p>';
+            return;
+        }
+
+        const registro = dadosNotas.find(item => item.matricula === mat);
+
+        if (!registro) {
+            resultadoDiv.innerHTML = '<p class="erro">Matrícula não encontrada na tabela de notas.</p>';
+            return;
+        }
+
+        resultadoDiv.innerHTML = `
+            <h2>Resultado</h2>
+            <table>
+                <tr><th>Matrícula</th><td>${registro.matricula}</td></tr>
+                <tr><th>Nome</th><td>${registro.nome}</td></tr>
+                <tr><th>Período</th><td>${registro.periodo}</td></tr>
+                <tr><th>Acertos</th><td>${registro.acertos}</td></tr>
+                <tr><th>Nota</th><td>${registro.nota}</td></tr>
+            </table>
+        `;
+    }
+</script>
+
+</body>
+</html>

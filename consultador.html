@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Consulta de Prova Interdisciplinar</title>
+    <style>
+        :root {
+            --vermelho: #9b1518;
+            --azul: #00558b;
+            --cinza-fundo: #f2f4f7;
+            --cinza-borda: #c0c4cc;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: var(--cinza-fundo);
+        }
+
+        header {
+            background-color: #ffffff;
+            border-bottom: 4px solid var(--vermelho);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        header img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border: 1px solid var(--cinza-borda);
+            border-radius: 4px;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: var(--azul);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333333;
+        }
+
+        select, input[type="text"] {
+            padding: 6px;
+            margin-right: 8px;
+            border: 1px solid var(--cinza-borda);
+            border-radius: 3px;
+        }
+
+        input[type="text"] {
+            width: 200px;
+        }
+
+        button {
+            padding: 6px 14px;
+            background-color: var(--vermelho);
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #7f1114;
+        }
+
+        #resultado {
+            margin-top: 20px;
+            border-top: 1px solid var(--cinza-borda);
+            padding-top: 10px;
+        }
+
+        .erro {
+            color: var(--vermelho);
+            font-weight: bold;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid var(--cinza-borda);
+            padding: 6px 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--azul);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <!-- Logo carregado do endereço indicado -->
+    <img src="https://i.ibb.co/RMR8H4z/Logo.jpg" alt="UNIPAC Governador Valadares">
+</header>
+
+<main>
+    <h1>Consulta de Prova Interdisciplinar</h1>
+
+    <form id="formConsulta" onsubmit="event.preventDefault(); consultar();">
+        <label for="arquivo">Selecione o curso / arquivo CSV:</label>
+        <select id="arquivo" name="arquivo" required>
+            <option value="">-- escolha --</option>
+            <option value="enfermagem">Enfermagem - Prova Interdisciplinar 2025/2</option>
+            <option value="pedagogia">Pedagogia - Prova Interdisciplinar 2025/2</option>
+        </select>
+
+        <label for="matricula" style="margin-top:10px;">Digite sua matrícula:</label>
+        <input type="text" id="matricula" name="matricula" required>
+        <button type="submit">Consultar</button>
+    </form>
+
+    <div id="resultado"></div>
+</main>
+
+<script>
+    /* 
+       Coloque os dois arquivos CSV na mesma pasta deste HTML com os seguintes nomes:
+       - Prova-Interdisciplinar-Enfermagem-2025-2.csv
+       - Prova-Interdisciplinar-Pedagogia-2025-2.csv
+       O formato é:
+         Enfermagem: Matricula;Nome;Periodo;Acertos;Nota;Obs
+         Pedagogia:  Matricula;Nome;Acertos;Nota;Obs
+       conforme o conteúdo dos anexos. [file:4][file:5]
+    */
+
+    const MAPA_ARQUIVOS = {
+        enfermagem: {
+            url: "Prova-Interdisciplinar-Enfermagem-2025-2.csv",
+            tipo: "enfermagem"
+        },
+        pedagogia: {
+            url: "Prova-Interdisciplinar-Pedagogia-2025-2.csv",
+            tipo: "pedagogia"
+        }
+    };
+
+    let cacheDados = {}; // guarda dados parseados por arquivo
+
+    async function carregarArquivo(chave) {
+        if (cacheDados[chave]) {
+            return cacheDados[chave];
+        }
+
+        const info = MAPA_ARQUIVOS[chave];
+        const resp = await fetch(info.url);
+        const texto = await resp.text();
+
+        const linhas = texto
+            .split(/\r?\n/)
+            .map(l => l.trim())
+            .filter(l => l.length > 0);
+
+        // descarta cabeçalho, se existir
+        const dados = [];
+        for (let i = 0; i < linhas.length; i++) {
+            const linha = linhas[i];
+
+            // tenta separar por ; (recomendado) e, em último caso, por ,
+            let partes = linha.split(";");
+            if (partes.length === 1) {
+                partes = linha.split(",");
+            }
+
+            // pula linhas de cabeçalho (contendo texto)
+            if (i === 0 && /Matric/.test(partes[0])) {
+                continue;
+            }
+
+            if (info.tipo === "enfermagem") {
+                // Matricula;Nome;Periodo;Acertos;Nota;Obs
+                const [mat, nome, periodo, acertos, nota, obs] = partes;
+                if (!mat) continue;
+                dados.push({
+                    matricula: mat.trim(),
+                    nome: (nome || "").trim(),
+                    periodo: (periodo || "").trim(),
+                    acertos: Number(acertos?.replace(",", ".") || 0),
+                    nota: Number(nota?.replace(",", ".") || 0),
+                    obs: (obs || "").trim()
+                });
+            } else {
+                // pedagogia: Matricula;Nome;Acertos;Nota;Obs
+                const [mat, nome, acertos, nota, obs] = partes;
+                if (!mat) continue;
+                dados.push({
+                    matricula: mat.trim(),
+                    nome: (nome || "").trim(),
+                    periodo: "", // não existe no CSV de Pedagogia
+                    acertos: Number(acertos?.replace(",", ".") || 0),
+                    nota: Number(nota?.replace(",", ".") || 0),
+                    obs: (obs || "").trim()
+                });
+            }
+        }
+
+        cacheDados[chave] = dados;
+        return dados;
+    }
+
+    async function consultar() {
+        const chave = document.getElementById("arquivo").value;
+        const mat = document.getElementById("matricula").value.trim();
+        const resultadoDiv = document.getElementById("resultado");
+        resultadoDiv.innerHTML = "";
+
+        if (!chave) {
+            resultadoDiv.innerHTML = '<p class="erro">Selecione um arquivo.</p>';
+            return;
+        }
+        if (!mat) {
+            resultadoDiv.innerHTML = '<p class="erro">Informe um número de matrícula.</p>';
+            return;
+        }
+
+        try {
+            const dados = await carregarArquivo(chave);
+            const registro = dados.find(item => item.matricula === mat);
+
+            if (!registro) {
+                resultadoDiv.innerHTML =
+                    '<p class="erro">Matrícula não encontrada no arquivo selecionado.</p>';
+                return;
+            }
+
+            const mostraPeriodo = chave === "enfermagem";
+
+            resultadoDiv.innerHTML = `
+                <h2>Resultado</h2>
+                <table>
+                    <tr><th>Matrícula</th><td>${registro.matricula}</td></tr>
+                    <tr><th>Nome</th><td>${registro.nome}</td></tr>
+                    ${mostraPeriodo ? `<tr><th>Período</th><td>${registro.periodo}</td></tr>` : ""}
+                    <tr><th>Acertos</th><td>${registro.acertos}</td></tr>
+                    <tr><th>Nota</th><td>${registro.nota}</td></tr>
+                    <tr><th>Obs</th><td>${registro.obs || ""}</td></tr>
+                </table>
+            `;
+        } catch (e) {
+            console.error(e);
+            resultadoDiv.innerHTML =
+                '<p class="erro">Erro ao carregar o arquivo CSV. Verifique se o arquivo está na mesma pasta do HTML.</p>';
+        }
+    }
+</script>
+
+</body>
+</html>

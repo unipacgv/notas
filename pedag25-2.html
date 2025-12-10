@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Pedagogia - Consulta de Notas</title>
+    <style>
+        :root {
+            --vermelho: #9b1518;
+            --azul: #00558b;
+            --cinza-fundo: #f2f4f7;
+            --cinza-borda: #c0c4cc;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: var(--cinza-fundo);
+        }
+
+        header {
+            background-color: #ffffff;
+            border-bottom: 4px solid var(--vermelho);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        header img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border: 1px solid var(--cinza-borda);
+            border-radius: 4px;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: var(--azul);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333333;
+        }
+
+        input[type="text"] {
+            padding: 6px;
+            width: 220px;
+            margin-right: 8px;
+            border: 1px solid var(--cinza-borda);
+            border-radius: 3px;
+        }
+
+        button {
+            padding: 6px 14px;
+            background-color: var(--vermelho);
+            color: #ffffff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #7f1114;
+        }
+
+        #resultado {
+            margin-top: 20px;
+            border-top: 1px solid var(--cinza-borda);
+            padding-top: 10px;
+        }
+
+        .erro {
+            color: var(--vermelho);
+            font-weight: bold;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid var(--cinza-borda);
+            padding: 6px 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--azul);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <img src="https://i.ibb.co/RMR8H4z/Logo.jpg" alt="UNIPAC Governador Valadares">
+</header>
+
+<main>
+    <h1>Pedagogia - Consulta de Notas</h1>
+
+    <form id="formConsulta" onsubmit="event.preventDefault(); consultar();">
+        <label for="matricula">Digite sua matrícula:</label>
+        <input type="text" id="matricula" name="matricula" required>
+        <button type="submit">Consultar</button>
+    </form>
+
+    <div id="resultado"></div>
+</main>
+
+<script>
+    // Dados da planilha Notas-Pedagogia (Matricula, Nome, Acertos, Nota, Obs)
+    const dadosNotas = [
+        { matricula: "252000725", nome: "ALEXANDRE CARDOSO BARROSO", acertos: 12, nota: 8.0, obs: "" },
+        { matricula: "252000460", nome: "BEATRIZ PORTELA CORREA SILVA", acertos: 14, nota: 9.3, obs: "" },
+        { matricula: "252000814", nome: "EMILLY KAMILLE VERPERMANN DE SO JOAQUIM", acertos: 11, nota: 7.3, obs: "" },
+        { matricula: "252001317", nome: "KAILANY KRISTINA GOMES MIRANDA", acertos: 17, nota: 11.3, obs: "" },
+        { matricula: "252000680", nome: "VALQURIA EDUARDA RAMOS", acertos: 11, nota: 7.3, obs: "" },
+        { matricula: "252000589", nome: "WRICK JANIO FERREIRA GONCALVES", acertos: 14, nota: 9.3, obs: "" },
+
+        { matricula: "251002726", nome: "ADRIANA MENDES PORTELA", acertos: 20, nota: 13.3, obs: "" },
+        { matricula: "251001707", nome: "ALYCIA ALVES LEAO", acertos: 16, nota: 10.7, obs: "" },
+        { matricula: "251002680", nome: "EDNA RODRIGUES DA SILVA", acertos: 14, nota: 9.3, obs: "" },
+        { matricula: "251001687", nome: "MAICON DOUGLAS LUCAS DOS SANTOS", acertos: 12, nota: 8.0, obs: "" },
+        { matricula: "251002963", nome: "MILENA GONCALVES DE SOUZA", acertos: 21, nota: 14.0, obs: "" },
+
+        { matricula: "242009081", nome: "ANA CLARA GONCALVES DE OLIVEIRA SILVA", acertos: 19, nota: 12.7, obs: "" },
+        { matricula: "242009242", nome: "MELINA ROSA DE MAGALHAES HERINGER", acertos: 16, nota: 10.7, obs: "" },
+
+        { matricula: "241006552", nome: "AILANE BATISTA BELO GOMES LIMA", acertos: 14, nota: 9.3, obs: "" },
+        { matricula: "241007486", nome: "BARBARA DE PAULA SOUZA", acertos: 18, nota: 12.0, obs: "" },
+        { matricula: "241006169", nome: "ISABELLA GUIMARAES DOS SANTOS", acertos: 18, nota: 12.0, obs: "" },
+        { matricula: "241008169", nome: "KAMILY ASSIS FERREIRA SANTOS", acertos: 16, nota: 10.7, obs: "" },
+        { matricula: "241006322", nome: "LARISSA MARCIA MENDES GOMES", acertos: 18, nota: 12.0, obs: "" },
+        { matricula: "241006643", nome: "POLIANA MARCATE SILVA", acertos: 17, nota: 11.3, obs: "" },
+        { matricula: "241000182", nome: "RAIANE ESTEFANE PEREIRA LEAL PIMENTA", acertos: 21, nota: 14.0, obs: "" },
+        { matricula: "241007454", nome: "RISSIA QUEIROS DE MIRANDA", acertos: 20, nota: 13.3, obs: "" },
+        { matricula: "241008126", nome: "SUZANI ALVES DE AGUILAR", acertos: 21, nota: 14.0, obs: "" },
+
+        { matricula: "232001190", nome: "THAISSA OLIVEIRA SOARES", acertos: 12, nota: 8.0, obs: "" },
+
+        { matricula: "192001181", nome: "ANA VICTORIA DA SILVA BORGES", acertos: 12, nota: 8.0, obs: "" },
+
+        { matricula: "231001629", nome: "CAMILA MARCAL DE SOUZA", acertos: 17, nota: 11.3, obs: "" },
+        { matricula: "231002603", nome: "FELIPE SILVA DOS SANTOS", acertos: 19, nota: 12.7, obs: "" },
+        { matricula: "231000677", nome: "GABRIEL CARDOSO MOREIRA", acertos: 18, nota: 12.0, obs: "" },
+        { matricula: "231001773", nome: "GABRIELLY FERNANDA SANTOS DE OLIVEIRA", acertos: 12, nota: 8.0, obs: "Matricula marcada errada" },
+        { matricula: "231001114", nome: "GEOVANA MORAIS SILVA", acertos: 20, nota: 13.3, obs: "" },
+        { matricula: "231001345", nome: "KAREN KAROLINY GOMES MIRANDA", acertos: 20, nota: 13.3, obs: "" },
+
+        { matricula: "161000552", nome: "LETICYA ALVES DE AGUILAR", acertos: 9, nota: 6.0, obs: "" },
+        { matricula: "231001492", nome: "MARGARIDA DA SILVA OLIVEIRA", acertos: 15, nota: 10.0, obs: "" },
+        { matricula: "231001334", nome: "MARIA CLARA DUTRA DE OLIVEIRA SANTOS", acertos: 17, nota: 11.3, obs: "" },
+        { matricula: "231001676", nome: "MARINA FERREIRA DE JESUS", acertos: 18, nota: 12.0, obs: "" },
+
+        { matricula: "231002386", nome: "PATRICIA HENRIQUETA DOS SANTOS BRITO", acertos: 21, nota: 14.0, obs: "" },
+        { matricula: "231001457", nome: "SIBELY GONCALVES CASTINHO", acertos: 18, nota: 12.0, obs: "" },
+        { matricula: "231001268", nome: "TAYNA VITORIA SILVA SOUSA", acertos: 21, nota: 14.0, obs: "" }
+    ];
+
+    function consultar() {
+        const mat = document.getElementById('matricula').value.trim();
+        const resultadoDiv = document.getElementById('resultado');
+        resultadoDiv.innerHTML = "";
+
+        if (!mat) {
+            resultadoDiv.innerHTML = '<p class="erro">Informe um número de matrícula.</p>';
+            return;
+        }
+
+        const registro = dadosNotas.find(item => item.matricula === mat);
+
+        if (!registro) {
+            resultadoDiv.innerHTML = '<p class="erro">Matrícula não encontrada na tabela de notas.</p>';
+            return;
+        }
+
+        resultadoDiv.innerHTML = `
+            <h2>Resultado</h2>
+            <table>
+                <tr><th>Matrícula</th><td>${registro.matricula}</td></tr>
+                <tr><th>Nome</th><td>${registro.nome}</td></tr>
+                <tr><th>Acertos</th><td>${registro.acertos}</td></tr>
+                <tr><th>Nota</th><td>${registro.nota}</td></tr>
+                <tr><th>Obs</th><td>${registro.obs || ""}</td></tr>
+            </table>
+        `;
+    }
+</script>
+
+</body>
+</html>

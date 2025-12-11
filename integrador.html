@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Consulta Integrador por Matrícula</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    label { font-weight: bold; }
+    input { padding: 5px; font-size: 14px; }
+    button { padding: 6px 12px; font-size: 14px; margin-left: 5px; }
+    .resultado { margin-top: 20px; border: 1px solid #ccc; padding: 10px; border-radius: 4px; }
+    .erro { color: #b00; margin-top: 10px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>Consulta de Trabalho Integrador</h1>
+
+  <p>Digite o número de matrícula exatamente como está no arquivo (apenas números) e clique em "Buscar". [file:2]</p>
+
+  <div>
+    <label for="matriculaInput">Matrícula:</label>
+    <input id="matriculaInput" type="text" />
+    <button onclick="buscar()">Buscar</button>
+  </div>
+
+  <div id="mensagem" class="erro"></div>
+  <div id="resultado" class="resultado" style="display:none;"></div>
+
+  <script>
+    // Caminho do CSV (ajuste se colocar em outra pasta)
+    const CSV_URL = 'Integrador.csv';
+
+    let registros = [];
+
+    // Carrega e converte CSV em memória
+    async function carregarCSV() {
+      const resp = await fetch(CSV_URL);
+      const texto = await resp.text();
+
+      // CSV separado por ; com cabeçalho na primeira linha
+      const linhas = texto.trim().split(/
+?
+/);
+      const cabecalho = linhas[0].split(';').map(c => c.trim());
+
+      registros = linhas.slice(1).filter(l => l.trim() !== '').map(linha => {
+        const cols = linha.split(';');
+        const obj = {};
+        cabecalho.forEach((colNome, idx) => {
+          if (!colNome) return; // ignora colunas vazias
+          obj[colNome] = (cols[idx] || '').trim();
+        });
+        return obj;
+      });
+    }
+
+    // Garante que o CSV foi carregado
+    let carregando = carregarCSV();
+
+    async function buscar() {
+      const msg = document.getElementById('mensagem');
+      const resDiv = document.getElementById('resultado');
+      msg.textContent = '';
+      resDiv.style.display = 'none';
+      resDiv.innerHTML = '';
+
+      const matricula = document.getElementById('matriculaInput').value.trim();
+      if (!matricula) {
+        msg.textContent = 'Informe uma matrícula.';
+        return;
+      }
+
+      await carregando;
+
+      const registro = registros.find(r => (r['Matrícula'] || r['Matricula']) === matricula);
+      if (!registro) {
+        msg.textContent = 'Nenhum registro encontrado para essa matrícula.';
+        return;
+      }
+
+      // Renderiza os dados em tabela
+      const camposOrdem = [
+        'Matrícula','Matricula',
+        'Nome',
+        'Período','Periodo',
+        'Grupo',
+        'Orientador',
+        'Tema',
+        'Nota',
+        'Resumo',
+        'Apresentação',
+        'Elaboração',
+        'Presença',
+        'Faltas'
+      ];
+
+      let html = '<h2>Dados do aluno</h2><table><tbody>';
+      camposOrdem.forEach(campo => {
+        if (registro[campo] !== undefined && registro[campo] !== '') {
+          html += `<tr><th>${campo}</th><td>${registro[campo]}</td></tr>`;
+        }
+      });
+      html += '</tbody></table>';
+
+      resDiv.innerHTML = html;
+      resDiv.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

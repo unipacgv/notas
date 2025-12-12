@@ -202,7 +202,7 @@
         resultadoDiv.innerHTML = "";
 
         if (!mat) {
-            resultadoDiv.innerHTML = '<p class="erro">Informe um número de matrícula.</p>';
+            resultadoDiv.innerHTML = '<p class="erro">Informe o número de matrícula.</p>';
             return;
         }
 
@@ -212,7 +212,7 @@
 
             if (!registro) {
                 resultadoDiv.innerHTML =
-                    '<p class="erro">Matrícula não encontrada no arquivo Integrador.csv.</p>';
+                    '<p class="erro">Matrícula não encontrada.</p>';
                 return;
             }
 
@@ -236,7 +236,7 @@
         } catch (e) {
             console.error(e);
             resultadoDiv.innerHTML =
-                '<p class="erro">Erro ao carregar o arquivo Integrador.csv. Verifique se ele está na mesma pasta do HTML.</p>';
+                '<p class="erro">Erro ao carregar o banco de dados.</p>';
         }
     }
 </script>
